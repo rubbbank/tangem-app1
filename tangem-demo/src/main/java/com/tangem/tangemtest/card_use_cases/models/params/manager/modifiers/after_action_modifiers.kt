@@ -8,10 +8,10 @@ import com.tangem.tasks.TaskEvent
 
 /**
  * Created by Anton Zhilenkov on 13.03.2020.
- * Семейство классов AfterActionModification предназначены для модификации параметров (если это необходимо)
- * после вызова CardManager.anyAction
  *
- * Возвращает список параметров подвергшихся модификации
+ * The After Action Modification class family is intended for modifying parameters (if necessary)
+ * after calling CardManager.anyAction.
+ * Returns a list of parameters that have been modified
  */
 interface AfterActionModification {
     fun modify(taskEvent: TaskEvent<*>, paramsList: List<IncomingParameter>): List<IncomingParameter>

@@ -5,6 +5,9 @@ import com.tangem.tangemtest.card_use_cases.models.params.manager.IncomingParame
 
 /**
  * Created by Anton Zhilenkov on 12.03.2020.
+ *
+ * The ParamsChangeConsequence class family modifies parameters depending on the state
+ * of the incoming parameter
  */
 interface ParamsChangeConsequence {
     fun affectChanges(changedParameter: IncomingParameter, paramsList: List<IncomingParameter>): List<IncomingParameter>
