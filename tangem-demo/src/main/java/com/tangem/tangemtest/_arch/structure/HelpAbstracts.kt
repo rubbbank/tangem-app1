@@ -1,10 +1,10 @@
-package com.tangem.tangemtest._arch.structure.base
+package com.tangem.tangemtest._arch.structure
 
 /**
  * Created by Anton Zhilenkov on 22/03/2020.
  */
 interface DataHolder<D> {
-    var viewModel: D?
+    var viewModel: D
 }
 
 interface Payload {

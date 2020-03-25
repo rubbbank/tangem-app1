@@ -1,4 +1,4 @@
-package com.tangem.tangemtest._arch.structure.base
+package com.tangem.tangemtest._arch.structure
 
 /**
  * Created by Anton Zhilenkov on 24/03/2020.
