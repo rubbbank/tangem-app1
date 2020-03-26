@@ -6,6 +6,9 @@ import com.tangem.tangemtest.ucase.resources.ResourceHolder
 import com.tangem.tangemtest.ucase.resources.Resources
 import ru.dev.gbixahue.eu4d.lib.kotlin.common.TypedHolder
 
+/**
+ * Created by Anton Zhilenkov on 19/03/2020.
+ */
 class PersonalizeResources() {
     fun init(holder: ResourceHolder<Id>) {
         initBlock(holder)

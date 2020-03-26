@@ -19,7 +19,6 @@ import com.tangem.tasks.TaskEvent
 /**
  * Created by Anton Zhilenkov on 12.03.2020.
  */
-
 class ActionViewModelFactory(private val manager: ParamsManager) : ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T = ParamsViewModel(manager) as T
 }

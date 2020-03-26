@@ -9,6 +9,9 @@ typealias AffectedList = List<IncomingParameter>
 typealias AffectedParamsCallback = (AffectedList) -> Unit
 typealias ActionCallback = (ActionResponse, AffectedList) -> Unit
 
+/**
+ * Created by Anton Zhilenkov on 19/03/2020.
+ */
 interface ParamsManager {
 
     fun parameterChanged(tag: TlvTag, value: Any?, callback: AffectedParamsCallback? = null)

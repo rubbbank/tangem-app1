@@ -6,6 +6,9 @@ import com.tangem.tangemtest.ucase.domain.actions.SignAction
 import com.tangem.tangemtest.ucase.domain.paramsManager.ActionCallback
 import com.tangem.tangemtest.ucase.domain.paramsManager.IncomingParameter
 
+/**
+ * Created by Anton Zhilenkov on 19/03/2020.
+ */
 class SignParamsManager : BaseParamsManager(SignAction()) {
     override fun createParamsList(): List<IncomingParameter> {
         return listOf(

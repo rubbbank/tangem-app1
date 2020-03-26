@@ -7,6 +7,9 @@ import com.tangem.tangemtest.ucase.domain.actions.CardAction
 import com.tangem.tangemtest.ucase.domain.paramsManager.*
 import com.tangem.tangemtest.ucase.domain.paramsManager.triggers.changeConsequence.ParamsChangeConsequence
 
+/**
+ * Created by Anton Zhilenkov on 19/03/2020.
+ */
 abstract class BaseParamsManager(protected val action: CardAction) : ParamsManager {
 
     protected val paramsList: List<IncomingParameter> by lazy { createParamsList() }

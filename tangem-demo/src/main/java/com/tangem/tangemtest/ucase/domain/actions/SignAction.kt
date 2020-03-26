@@ -5,6 +5,9 @@ import com.tangem.tangemtest.ucase.domain.paramsManager.ActionCallback
 import com.tangem.tangemtest.ucase.domain.paramsManager.findParameter
 import ru.dev.gbixahue.eu4d.lib.kotlin.stringOf
 
+/**
+ * Created by Anton Zhilenkov on 19/03/2020.
+ */
 class SignAction : BaseCardAction() {
     override fun executeMainAction(attrs: AttrForAction, callback: ActionCallback) {
         val dataForHashing = attrs.paramsList.findParameter(TlvTag.TransactionOutHash) ?: return

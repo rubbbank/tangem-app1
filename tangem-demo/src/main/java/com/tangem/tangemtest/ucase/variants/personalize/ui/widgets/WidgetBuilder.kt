@@ -11,6 +11,9 @@ import com.tangem.tangemtest.ucase.variants.personalize.ui.widgets.impl.StubWidg
 import com.tangem.tangemtest.ucase.variants.personalize.ui.widgets.impl.block.LinearBlockWidget
 import com.tangem.tangemtest.ucase.variants.personalize.ui.widgets.impl.item.*
 
+/**
+ * Created by Anton Zhilenkov on 19/03/2020.
+ */
 class WidgetBuilder {
 
     fun build(item: Item, parent: ViewGroup): ViewWidget? {

@@ -7,6 +7,9 @@ import com.tangem.tangemtest.ucase.domain.paramsManager.ActionCallback
 import com.tangem.tasks.ScanEvent
 import com.tangem.tasks.TaskEvent
 
+/**
+ * Created by Anton Zhilenkov on 19/03/2020.
+ */
 class PersonalizeAction : BaseCardAction() {
     override fun executeMainAction(attrs: AttrForAction, callback: ActionCallback) {
         ScanAction().executeMainAction(attrs) { response, b ->

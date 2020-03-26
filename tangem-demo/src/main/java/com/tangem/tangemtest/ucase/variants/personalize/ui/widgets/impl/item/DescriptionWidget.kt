@@ -11,7 +11,7 @@ import com.tangem.tangemtest.ucase.variants.personalize.ui.widgets.abstraction.g
 import ru.dev.gbixahue.eu4d.lib.android.global.log.Log
 
 /**
- * Created by Anton Zhilenkov on 23/03/2020.
+ * Created by Anton Zhilenkov on 19/03/2020.
  */
 abstract class DescriptionWidget<D>(
         parent: ViewGroup,

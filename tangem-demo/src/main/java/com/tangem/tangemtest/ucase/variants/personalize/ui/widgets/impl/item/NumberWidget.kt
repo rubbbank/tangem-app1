@@ -10,6 +10,9 @@ import com.tangem.tangemtest._arch.structure.impl.NumberItem
 import com.tangem.tangemtest.ucase.variants.personalize.ui.widgets.abstraction.getResNameId
 import ru.dev.gbixahue.eu4d.lib.kotlin.stringOf
 
+/**
+ * Created by Anton Zhilenkov on 19/03/2020.
+ */
 class NumberWidget(parent: ViewGroup, data: NumberItem) : DescriptionWidget<Number>(parent, data) {
     override fun getLayoutId(): Int = R.layout.w_personalize_item_number
 
