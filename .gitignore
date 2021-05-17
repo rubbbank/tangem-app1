@@ -6,6 +6,9 @@
 # Local configuration file (sdk path, etc)
 local.properties
 
+# Google services
+app/google-services.json
+
 # Gradle generated files
 .gradle
 
