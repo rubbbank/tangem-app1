@@ -1,17 +1,15 @@
 package com.tangem.tap.features.onboarding.products.otherCards.redux
 
-import android.graphics.Bitmap
-import com.tangem.tap.features.onboarding.service.OnboardingOtherCardsService
+import com.tangem.tap.features.wallet.redux.Artwork
 import org.rekotlin.StateType
 
 /**
  * Created by Anton Zhilenkov on 23/09/2021.
  */
 data class OnboardingOtherCardsState(
-    val onboardingService: OnboardingOtherCardsService? = null,
-        // UI
+    // UI
+    val cardArtwork: Artwork? = null,
     val showConfetti: Boolean = false,
-    val artworkBitmap: Bitmap? = null,
     val currentStep: OnboardingOtherCardsStep = OnboardingOtherCardsStep.None,
     val steps: List<OnboardingOtherCardsStep> = OnboardingOtherCardsStep.values().toList(),
 ) : StateType {
