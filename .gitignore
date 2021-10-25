@@ -13,10 +13,7 @@ app/google-services.json
 .gradle
 
 # User-specific configurations
-.idea/caches/
-.idea/libraries/
-.idea/*.xml
-.idea/codeStyles
+.idea
 
 # LayoutInspector files
 /captures
