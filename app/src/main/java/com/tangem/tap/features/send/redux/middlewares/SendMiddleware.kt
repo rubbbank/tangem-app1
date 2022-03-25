@@ -202,12 +202,12 @@ private fun sendTransaction(
                     }
                     scope.launch(Dispatchers.IO) {
                         withContext(Dispatchers.Main) {
-                            dispatch(WalletAction.UpdateWallet(walletManager.wallet.blockchain))
+                            dispatch(WalletAction.LoadWallet(walletManager.wallet.blockchain))
                         }
                         //TODO: нужно ли шедулитть обновление через 10 секунд отсюда? Зачем?
                         delay(10000)
                         withContext(Dispatchers.Main) {
-                            dispatch(WalletAction.UpdateWallet(walletManager.wallet.blockchain))
+                            dispatch(WalletAction.LoadWallet(walletManager.wallet.blockchain))
                         }
                     }
                 }
