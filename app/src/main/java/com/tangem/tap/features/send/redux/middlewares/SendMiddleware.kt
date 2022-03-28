@@ -204,8 +204,7 @@ private fun sendTransaction(
                         withContext(Dispatchers.Main) {
                             dispatch(WalletAction.LoadWallet(walletManager.wallet.blockchain))
                         }
-                        //TODO: нужно ли шедулитть обновление через 10 секунд отсюда? Зачем?
-                        delay(10000)
+                        delay(11000) // more than 10000 to avoid throttling
                         withContext(Dispatchers.Main) {
                             dispatch(WalletAction.LoadWallet(walletManager.wallet.blockchain))
                         }
