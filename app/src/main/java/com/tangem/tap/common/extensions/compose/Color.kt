@@ -10,7 +10,11 @@ import androidx.core.graphics.red
 /**
  * Created by Anton Zhilenkov on 17/03/2022.
  */
-fun Color.argb(): Int {
+fun Color.toAndroidGraphicsColor(): Int {
     val argb = this.toArgb()
     return android.graphics.Color.argb(argb.alpha, argb.red, argb.green, argb.blue)
+}
+
+fun Color.parse(hexColor: String): Color {
+    return Color(hexColor.removePrefix("#").toInt(16))
 }
