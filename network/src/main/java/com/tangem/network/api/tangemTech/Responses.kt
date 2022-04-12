@@ -6,7 +6,7 @@ import java.math.BigDecimal
  * Created by Anton Zhilenkov on 02/04/2022.
  */
 interface HttpResponse
-interface TangemTechResponse : HttpResponse
+sealed interface TangemTechResponse : HttpResponse
 
 sealed class Coins : TangemTechResponse {
     data class PricesResponse(val prices: List<Price>) : Coins() {

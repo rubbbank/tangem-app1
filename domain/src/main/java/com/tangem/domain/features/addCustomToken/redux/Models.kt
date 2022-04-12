@@ -3,10 +3,6 @@ package com.tangem.domain.features.addCustomToken.redux
 /**
  * Created by Anton Zhilenkov on 10/04/2022.
  */
-enum class CompleteDataType {
-    Blockchain, Token
-}
-
 // describes state the screen, except the form fields
 data class ScreenState(
     val contractAddressField: ViewStates.TokenField,
