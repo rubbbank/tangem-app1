@@ -19,7 +19,7 @@ import com.tangem.wallet.R
  * Created by Anton Zhilenkov on 25/03/2022.
  */
 @Composable
-fun Button(
+fun RectangleButton(
     modifier: Modifier = Modifier,
     text: String = "",
     textId: Int? = null,
@@ -90,7 +90,7 @@ fun ButtonTest() {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             PreviewItem("Button") {
-                Button(text = "Some button") {}
+                RectangleButton(text = "Some button") {}
             }
             PreviewItem("PasteButton") {
                 PasteButton(onClick = {})
