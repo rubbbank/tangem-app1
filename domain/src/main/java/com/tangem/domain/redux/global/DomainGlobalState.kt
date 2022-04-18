@@ -8,7 +8,8 @@ import com.tangem.network.api.tangemTech.TangemTechService
  * Created by Anton Zhilenkov on 07/04/2022.
  */
 data class DomainGlobalState(
-    // there is a part of mirrors from the GlobalState
+    // there is a part of mirrors from the GlobalState.
+    // It updates on GlobalAction.SaveScanNoteResponse -> DomainGlobalAction.SaveScanNoteResponse(scanResponse)
     val scanResponse: ScanResponse? = null,
     //
     val networkServices: NetworkServices = NetworkServices(),
