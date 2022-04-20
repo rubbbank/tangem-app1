@@ -1,4 +1,4 @@
-package com.tangem.tap.features.tokens.addCustomToken.compose
+package com.tangem.tap.features.tokens.addCustomToken.compose.test
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -25,8 +25,8 @@ import timber.log.Timber
  * Created by Anton Zhilenkov on 12/04/2022.
  */
 @Composable
-fun AddCustomTokenDebugActions() {
-    if (!BuildConfig.DEBUG) return
+fun TestAddCustomTokenActions() {
+    if (!BuildConfig.TEST_ACTION_ENABLED) return
 
     Column() {
         // deep test
