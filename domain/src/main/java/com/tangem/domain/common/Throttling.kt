@@ -1,4 +1,4 @@
-package com.tangem.tap.common
+package com.tangem.domain.common
 
 /**
  * Created by Anton Zhilenkov on 24/03/2022.
