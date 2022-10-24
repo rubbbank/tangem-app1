@@ -27,7 +27,7 @@ import java.math.BigDecimal
 /**
  * Created by Anton Zhilenkov on 15.10.2022.
  */
-class SaltPayRegistrationManager(
+class SaltPayActivationManager(
     val cardId: String,
     val cardPublicKey: ByteArray,
     val walletPublicKey: ByteArray,
@@ -162,7 +162,7 @@ class SaltPayRegistrationManager(
     )
 
     companion object {
-        fun stub(): SaltPayRegistrationManager = SaltPayRegistrationManager(
+        fun stub(): SaltPayActivationManager = SaltPayActivationManager(
             kycProvider = SaltPayConfig.stub().kycProvider,
             paymentologyService = PaymentologyApiService.stub(),
             gnosisRegistrator = GnosisRegistrator.stub(),
