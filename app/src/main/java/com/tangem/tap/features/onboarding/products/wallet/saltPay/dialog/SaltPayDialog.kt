@@ -1,12 +1,16 @@
 package com.tangem.tap.features.onboarding.products.wallet.saltPay.dialog
 
+import com.tangem.common.extensions.VoidCallback
 import com.tangem.tap.common.redux.StateDialog
-import com.tangem.tap.features.onboarding.products.wallet.saltPay.message.SaltPayRegistrationError
+import com.tangem.tap.features.onboarding.products.wallet.saltPay.message.SaltPayActivationError
 
 /**
  * Created by Anton Zhilenkov on 12.10.2022.
  */
 sealed class SaltPayDialog : StateDialog {
-    object NoFundsForActivation : SaltPayDialog()
-    data class RegistrationError(val error: SaltPayRegistrationError) : SaltPayDialog()
+    sealed class Activation : SaltPayDialog() {
+        object NoGas : SaltPayDialog()
+        data class OnError(val error: SaltPayActivationError) : SaltPayDialog()
+        data class TryToInterrupt(val onOk: VoidCallback, val onCancel: VoidCallback) : SaltPayDialog()
+    }
 }
