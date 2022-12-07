@@ -29,12 +29,12 @@ import com.tangem.feature.referral.presentation.R
  * @param url link to the html page
  */
 @Composable
-fun AgreementBottomSheetContent(url: String) {
+internal fun AgreementBottomSheetContent(url: String) {
     Column(
         modifier = Modifier
             .background(color = MaterialTheme.colors.secondary)
             .fillMaxWidth()
-            .height(LocalConfiguration.current.screenHeightDp.dp - dimensionResource(id = R.dimen.spacing16)),
+            .height(LocalConfiguration.current.screenHeightDp.dp - TangemTheme.dimens.spacing16),
     ) {
         BottomSheetIndicator()
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
