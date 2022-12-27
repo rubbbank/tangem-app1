@@ -9,8 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.tangem.core.ui.components.Keyboard
 import com.tangem.tangem_sdk_new.extensions.pxToDp
-import com.tangem.tap.common.compose.Keyboard
 
 /**
  * Created by Anton Zhilenkov on 08/04/2022.
