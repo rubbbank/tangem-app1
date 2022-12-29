@@ -1,6 +1,5 @@
 package com.tangem.tap.domain.model
 
-import com.tangem.common.extensions.toHexString
 import com.tangem.domain.common.ScanResponse
 import com.tangem.domain.common.util.UserWalletId
 
@@ -33,23 +32,4 @@ data class UserWallet(
 
     val isLocked: Boolean
         get() = scanResponse.card.wallets.isEmpty()
-}
-
-/**
- * !!! Workaround !!!
- *
- * Calculate same [UserWalletId] for twins instead
- *
- * TODO: Remove after https://tangem.atlassian.net/browse/AND-2638
- * */
-fun UserWallet.isTwinnedWith(other: UserWallet): Boolean {
-    if (!scanResponse.isTangemTwins() || !other.scanResponse.isTangemTwins()) return false
-    if (scanResponse.secondTwinPublicKey == null || other.scanResponse.secondTwinPublicKey == null) return false
-    if (other.scanResponse.secondTwinPublicKey == scanResponse.card.wallets.firstOrNull()?.publicKey?.toHexString()) {
-        return true
-    }
-    if (scanResponse.secondTwinPublicKey == other.scanResponse.card.wallets.firstOrNull()?.publicKey?.toHexString()) {
-        return true
-    }
-    return false
 }
