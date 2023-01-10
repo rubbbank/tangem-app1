@@ -1,9 +1,9 @@
-package com.tangem.tap.common.analytics.events
+package com.tangem.core.analytics
 
 /**
  * Created by Anton Zhilenkov on 28.09.2022.
  */
-sealed class AnalyticsEvent(
+open class AnalyticsEvent(
     val category: String,
     val event: String,
     var params: Map<String, String> = mapOf(),
