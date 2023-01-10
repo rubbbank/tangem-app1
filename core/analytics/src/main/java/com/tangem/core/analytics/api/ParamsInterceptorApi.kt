@@ -1,6 +1,6 @@
-package com.tangem.tap.common.analytics.api
+package com.tangem.core.analytics.api
 
-import com.tangem.tap.common.analytics.events.AnalyticsEvent
+import com.tangem.core.analytics.AnalyticsEvent
 
 /**
  * Created by Anton Zhilenkov on 02.11.2022.
