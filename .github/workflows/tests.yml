@@ -28,15 +28,11 @@ jobs:
       with:
         submodules: true
         token: ${{ secrets.GH_MOBILE_PAT }}
-        
-    - name: Set up JDK
-      uses: actions/setup-java@v2
-      with:
-       distribution: 'zulu'
-       java-version: '11'
        
     - name: Bundle install
       run: |
+        export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home
+        export PATH=$JAVA_HOME/bin:$PATH 
         bundle config path vendor/bundle
         bundle install --jobs 4 --retry 3
       
