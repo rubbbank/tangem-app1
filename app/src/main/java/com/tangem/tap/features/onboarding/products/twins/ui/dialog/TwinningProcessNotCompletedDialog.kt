@@ -10,7 +10,7 @@ import com.tangem.wallet.R
 /**
  * Created by Anton Zhilenkov on 22/10/2021.
  */
-object CreateWalletInterruptDialog {
+object TwinningProcessNotCompletedDialog {
     fun create(context: Context): AlertDialog {
         return MaterialAlertDialogBuilder(context)
             .setMessage(R.string.onboarding_twin_exit_warning)
