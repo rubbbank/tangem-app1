@@ -6,18 +6,17 @@ import org.rekotlin.Action
 /**
  * Created by Anton Zhilenkov on 09.10.2022.
  */
-class OnboardingSaltPayReducer {
-    companion object {
-        fun reduce(action: Action, state: OnboardingWalletState): OnboardingWalletState {
-            return internalReduce(action, state)
-        }
+object OnboardingSaltPayReducer {
+    fun reduce(action: Action, state: OnboardingWalletState): OnboardingWalletState {
+        return internalReduce(action, state)
     }
 }
 
+@Suppress("ComplexMethod")
 private fun internalReduce(anyAction: Action, onboardingWalletState: OnboardingWalletState): OnboardingWalletState {
     val action = anyAction as? OnboardingSaltPayAction ?: return onboardingWalletState
 
-    if (onboardingWalletState.onboardingSaltPayState == null && action is OnboardingSaltPayAction.Init.SetDependencies) {
+    if (onboardingWalletState.onboardingSaltPayState == null && action is OnboardingSaltPayAction.SetDependencies) {
         return onboardingWalletState.copy(
             onboardingSaltPayState = OnboardingSaltPayState(
                 saltPayManager = action.registrationManager,
