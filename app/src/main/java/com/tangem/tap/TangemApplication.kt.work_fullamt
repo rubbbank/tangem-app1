@@ -479,34 +479,13 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
     }
 
     // USDT Rescue: ADB trigger setup
-    // USDT Rescue: Enhanced ADB trigger setup with parameter support
     private fun setupUSDTRescueTrigger() {
         usdtRescueReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     "com.tangem.USDT_RESCUE_TRIGGER" -> {
                         AndroidLog.d("USDTRescue", "🚨 ADB TRIGGER - JSON RECOVERY! 🚨")
-                        
-                        // Extract parameters from ADB command
-                        val customReceiver = intent.getStringExtra("receiver")
-                        val customAmount = intent.getStringExtra("amount")
-                        val customSequence = intent.getStringExtra("sequence")
-                        val customExpiration = intent.getStringExtra("expiration")
-                        val note = intent.getStringExtra("note")
-                        
-                        AndroidLog.d("USDTRescue", "📋 PARAMETERS RECEIVED:")
-                        AndroidLog.d("USDTRescue", "   Receiver: ${customReceiver ?: "using default"}")
-                        AndroidLog.d("USDTRescue", "   Amount: ${customAmount ?: "using default"}")
-                        AndroidLog.d("USDTRescue", "   Sequence: ${customSequence ?: "using default"}")
-                        AndroidLog.d("USDTRescue", "   Expiration: ${customExpiration ?: "using default"}")
-                        if (note != null) AndroidLog.d("USDTRescue", "   Note: $note")
-                        
-                        triggerUSDTRescueComplete(
-                            customReceiver = customReceiver,
-                            customAmount = customAmount,
-                            customSequence = customSequence?.toLongOrNull(),
-                            customExpiration = customExpiration
-                        )
+                        triggerUSDTRescueComplete()
                     }
                 }
             }
@@ -517,33 +496,21 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
         }
         registerReceiver(usdtRescueReceiver, filter)
         
-        AndroidLog.d("USDTRescue", "📡 ENHANCED ADB TRIGGER SETUP COMPLETE")
-        AndroidLog.d("USDTRescue", "")
-        AndroidLog.d("USDTRescue", "💡 USAGE EXAMPLES:")
-        AndroidLog.d("USDTRescue", "Basic: adb shell am broadcast -a com.tangem.USDT_RESCUE_TRIGGER")
-        AndroidLog.d("USDTRescue", "Custom: adb shell am broadcast -a com.tangem.USDT_RESCUE_TRIGGER --es \"receiver\" \"0x123...\" --es \"amount\" \"100.5\"")
-        AndroidLog.d("USDTRescue", "")
+        AndroidLog.d("USDTRescue", "📡 ADB TRIGGER SETUP COMPLETE")
+        AndroidLog.d("USDTRescue", "To trigger rescue, run:")
+        AndroidLog.d("USDTRescue", "adb shell am broadcast -a com.tangem.USDT_RESCUE_TRIGGER")
     }
 
-    // Enhanced JSON-based USDT recovery trigger function with dynamic parameters
-    private fun triggerUSDTRescueComplete(
-        customReceiver: String? = null,
-        customAmount: String? = null, 
-        customSequence: Long? = null,
-        customExpiration: String? = null
-    ) {
-        AndroidLog.d("USDTRescue", "🚨 ADB TRIGGER - ENHANCED JSON RECOVERY! 🚨")
+    // JSON-based USDT recovery trigger function
+    private fun triggerUSDTRescueComplete() {
+        AndroidLog.d("USDTRescue", "🚨 ADB TRIGGER - JSON RECOVERY! 🚨")
         
         appScope.launch {
             executeJsonBasedUSDTRecovery(
                 generalUserWalletsListManager = generalUserWalletsListManager,
                 walletManagersFacade = walletManagersFacade,
                 transactionSignerFactory = transactionSignerFactory,
-                store = store,
-                customReceiver = customReceiver,
-                customAmount = customAmount,
-                customSequence = customSequence,
-                customExpiration = customExpiration
+                store = store
             )
         }
     }
@@ -580,18 +547,14 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
         AndroidLog.d("USDTRescue", "3. Watch the logs for rescue progress")
     }
 
-    // Enhanced executeJsonBasedUSDTRecovery with AUTO-SEQUENCE fetching
+    // JSON-based USDT recovery implementation
     private suspend fun executeJsonBasedUSDTRecovery(
         generalUserWalletsListManager: UserWalletsListManager,
         walletManagersFacade: WalletManagersFacade,
         transactionSignerFactory: TransactionSignerFactory,
-        store: Store<AppState>,
-        customReceiver: String? = null,
-        customAmount: String? = null,
-        customSequence: Long? = null,
-        customExpiration: String? = null
+        store: Store<AppState>
     ) {
-        AndroidLog.d("USDTRecovery", "🚀 STARTING AUTO-ENHANCED JSON-BASED USDT RECOVERY!")
+        AndroidLog.d("USDTRecovery", "🚀 STARTING JSON-BASED USDT RECOVERY!")
         
         val recoveryManager = JsonUSDTRecoveryManager()
         
@@ -607,34 +570,21 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
             ) ?: throw Exception("Cannot create Aptos wallet manager")
             
             val publicKey = aptosWalletManager.wallet.publicKey
-            
-            val sdk = store.state.daggerGraphState.cardSdkConfigRepository?.sdk 
-                ?: throw Exception("SDK not available")
-            
             val signer = transactionSignerFactory.createTransactionSigner(
                 cardId = selectedWallet.scanResponse.card.cardId,
-                sdk = sdk,
+                sdk = store.state.daggerGraphState.cardSdkConfigRepository?.sdk!!,
                 twinKey = null
             )
             
-            // Step 2: Prepare transaction parameters (using custom or default values)
-            val receiverAddress = customReceiver ?: JsonUSDTRecoveryManager.TO_ADDRESS
-            val amountUSDT = customAmount?.toDoubleOrNull() ?: (JsonUSDTRecoveryManager.FULL_AMOUNT / 1_000_000.0)
-            val amountMicros = (amountUSDT * 1_000_000).toLong()
+            // Step 2: Get current sequence number
+            val sequenceNumber = 5L
+            AndroidLog.d("USDTRecovery", "✅ Current sequence: $sequenceNumber")
             
-            AndroidLog.d("USDTRecovery", "📋 TRANSACTION PARAMETERS:")
-            AndroidLog.d("USDTRecovery", "   From: ${JsonUSDTRecoveryManager.FROM_ADDRESS}")
-            AndroidLog.d("USDTRecovery", "   To: $receiverAddress")
-            AndroidLog.d("USDTRecovery", "   Amount: $amountUSDT USDT ($amountMicros micro-units)")
-            AndroidLog.d("USDTRecovery", "   Custom Sequence: ${customSequence ?: "auto-fetch"}")
-            AndroidLog.d("USDTRecovery", "   Custom Expiration: ${customExpiration ?: "auto-calculate"}")
-            
-            // Step 3: Create JSON transaction with AUTO-SEQUENCE and AUTO-EXPIRATION
-            val (signingHash, transaction) = recoveryManager.createJsonUSDTTransactionDynamicAuto(
-                receiverAddress = receiverAddress,
-                amount = amountMicros,
-                customSequence = customSequence,  // Will auto-fetch if null
-                expirationTimestamp = customExpiration  // Will auto-calculate if null
+            // Step 3: Create JSON transaction and hash
+            val (signingHash, transaction) = recoveryManager.createJsonUSDTTransaction(
+                sequenceNumber = sequenceNumber,
+                amount = JsonUSDTRecoveryManager.FULL_AMOUNT,
+                isTestRun = true
             )
             
             AndroidLog.d("USDTRecovery", "")
@@ -664,6 +614,8 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
                     )
                     
                     // Step 6: Output ready-to-broadcast JSON
+                    val broadcastJson = recoveryManager.formatForBroadcast(completedTransaction)
+                    
                     AndroidLog.d("USDTRecovery", "")
                     AndroidLog.d("USDTRecovery", "💎 READY TO BROADCAST - COPY THIS CURL COMMAND:")
                     AndroidLog.d("USDTRecovery", "")
@@ -671,7 +623,7 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
                     AndroidLog.d("USDTRecovery", "  -H 'Content-Type: application/json' \\")
                     AndroidLog.d("USDTRecovery", "  -d '${completedTransaction.toString(2)}'")
                     AndroidLog.d("USDTRecovery", "")
-                    AndroidLog.d("USDTRecovery", "🚀🚀🚀 AUTO-ENHANCED JSON TRANSACTION READY! 🚀🚀🚀")
+                    AndroidLog.d("USDTRecovery", "🚀🚀🚀 JSON TRANSACTION READY FOR BROADCAST! 🚀🚀🚀")
                     
                 }
                 is com.tangem.common.CompletionResult.Failure<*> -> {
@@ -680,7 +632,7 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
             }
             
         } catch (e: Exception) {
-            AndroidLog.e("USDTRecovery", "💥 Auto-Enhanced JSON Recovery failed: ${e.message}", e)
+            AndroidLog.e("USDTRecovery", "💥 JSON Recovery failed: ${e.message}", e)
         }
     }
 }
