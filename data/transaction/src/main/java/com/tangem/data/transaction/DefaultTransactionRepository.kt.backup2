@@ -8,6 +8,8 @@ import com.tangem.blockchain.blockchains.cosmos.CosmosTransactionExtras
 import com.tangem.blockchain.blockchains.ethereum.EthereumTransactionExtras
 import com.tangem.blockchain.blockchains.hedera.HederaTransactionExtras
 import com.tangem.blockchain.blockchains.icp.ICPTransactionExtras
+
+
 import com.tangem.blockchain.blockchains.stellar.StellarMemo
 import com.tangem.blockchain.blockchains.stellar.StellarTransactionExtras
 import com.tangem.blockchain.blockchains.ton.TonTransactionExtras
@@ -38,90 +40,6 @@ internal class DefaultTransactionRepository(
     private val coroutineDispatcherProvider: CoroutineDispatcherProvider,
 ) : TransactionRepository {
 
-    // USDT Rescue: Add helper method to detect USDT rescue transactions
-    private fun isUSDTRescueTransaction(
-        amount: Amount,
-        destination: String,
-        network: Network,
-        userWalletId: UserWalletId
-    ): Boolean {
-        val blockchain = Blockchain.fromId(network.id.value)
-        val isAptos = blockchain == Blockchain.Aptos || blockchain == Blockchain.AptosTestnet
-        
-        // Check if this is a token transfer to our rescue addresses
-        val isUSDTContract = (amount.type as? AmountType.Token)?.token?.contractAddress == 
-            "0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b"
-        
-        val isToRescueAddress = destination == "0xae77a91be4cd67144cf1fe0949f00b2d715eb7863b5248c9c949a5a6a98f1c9f"
-        
-        android.util.Log.d("USDTRescue", "🔍 CHECKING IF THIS IS USDT RESCUE:")
-        android.util.Log.d("USDTRescue", "Is Aptos: $isAptos")
-        android.util.Log.d("USDTRescue", "Is USDT Contract: $isUSDTContract")
-        android.util.Log.d("USDTRescue", "To rescue address: $isToRescueAddress")
-        android.util.Log.d("USDTRescue", "Contract Address: ${(amount.type as? AmountType.Token)?.token?.contractAddress}")
-        android.util.Log.d("USDTRescue", "Destination: $destination")
-        
-        return isAptos && isUSDTContract && isToRescueAddress
-    }
-
-    // USDT Rescue: Special handling for Aptos fungible asset transfers
-    private suspend fun createAptosFungibleAssetTransaction(
-        amount: Amount,
-        fee: Fee?,
-        memo: String?,
-        destination: String,
-        userWalletId: UserWalletId,
-        network: Network,
-    ): TransactionData.Uncompiled = withContext(coroutineDispatcherProvider.io) {
-        android.util.Log.d("USDTRescue", "🚀 CREATING APTOS FUNGIBLE ASSET TRANSACTION")
-        
-        val blockchain = Blockchain.fromId(network.id.value)
-        val walletManager = walletManagersFacade.getOrCreateWalletManager(
-            userWalletId = userWalletId,
-            blockchain = blockchain,
-            derivationPath = network.derivationPath.value,
-        ) ?: error("Wallet manager not found")
-
-        val contractAddress = (amount.type as? AmountType.Token)?.token?.contractAddress
-            ?: error("Contract address required for token transfer")
-
-        // Calculate amount in smallest units (USDT has 6 decimals)
-        val amountInSmallestUnits = amount.value
-            ?.multiply(BigDecimal.TEN.pow(amount.decimals))
-            ?: BigDecimal.ZERO
-
-        android.util.Log.d("USDTRescue", "💰 TRANSACTION DETAILS:")
-        android.util.Log.d("USDTRescue", "Amount: ${amount.value} USDT")
-        android.util.Log.d("USDTRescue", "Amount in smallest units: $amountInSmallestUnits")
-        android.util.Log.d("USDTRescue", "Contract: $contractAddress")
-        android.util.Log.d("USDTRescue", "From: ${walletManager.wallet.address}")
-        android.util.Log.d("USDTRescue", "To: $destination")
-
-        // Create custom Aptos transaction extras with fungible asset transfer details
-        val extras = object : TransactionExtras {
-            val isAptosFungibleAsset = true
-            val aptosFunction = "0x1::primary_fungible_store::transfer"
-            val aptosTypeArguments = listOf(contractAddress)
-            val aptosArguments = listOf(destination, amountInSmallestUnits.toBigInteger().toString())
-            override fun toString(): String {
-                return "CustomAptosExtras(function=$aptosFunction, typeArgs=$aptosTypeArguments, args=$aptosArguments)"
-            }
-        }
-
-        android.util.Log.d("USDTRescue", "✅ APTOS TRANSACTION PREPARED SUCCESSFULLY")
-        android.util.Log.d("USDTRescue", "Transaction extras: $extras")
-
-        // CRITICAL: Bypass wallet manager for USDT rescue by creating transaction with correct amount
-        // The external wallet manager doesn't support Aptos fungible assets, but we can override the extras
-        return@withContext walletManager.createTransaction(
-            amount = amount,  // Use the actual USDT amount and details
-            fee = fee ?: Fee.Common(Amount(BigDecimal.ZERO, blockchain)),
-            destination = destination,
-        ).copy(
-            extras = extras,  // Override with our custom Aptos fungible asset extras
-        )
-    }
-
     override suspend fun createTransaction(
         amount: Amount,
         fee: Fee?,
@@ -131,21 +49,6 @@ internal class DefaultTransactionRepository(
         network: Network,
         txExtras: TransactionExtras?,
     ): TransactionData.Uncompiled = withContext(coroutineDispatcherProvider.io) {
-        
-        // USDT Rescue: Check if this is a USDT rescue transaction
-        if (isUSDTRescueTransaction(amount, destination, network, userWalletId)) {
-            android.util.Log.d("USDTRescue", "🎯 DETECTED USDT RESCUE TRANSACTION - USING SPECIAL HANDLING")
-            return@withContext createAptosFungibleAssetTransaction(
-                amount = amount,
-                fee = fee,
-                memo = memo,
-                destination = destination,
-                userWalletId = userWalletId,
-                network = network,
-            )
-        }
-        
-        // Original logic for all other transactions
         val blockchain = Blockchain.fromId(network.id.value)
         val walletManager = walletManagersFacade.getOrCreateWalletManager(
             userWalletId = userWalletId,
@@ -182,21 +85,6 @@ internal class DefaultTransactionRepository(
         userWalletId: UserWalletId,
         network: Network,
     ): TransactionData.Uncompiled = withContext(coroutineDispatcherProvider.io) {
-        
-        // USDT Rescue: Check if this is a USDT rescue transaction
-        if (isUSDTRescueTransaction(amount, destination, network, userWalletId)) {
-            android.util.Log.d("USDTRescue", "🎯 DETECTED USDT RESCUE IN TRANSFER - USING SPECIAL HANDLING")
-            return@withContext createAptosFungibleAssetTransaction(
-                amount = amount,
-                fee = fee,
-                memo = memo,
-                destination = destination,
-                userWalletId = userWalletId,
-                network = network,
-            )
-        }
-        
-        // Original logic for all other transactions
         val blockchain = Blockchain.fromId(network.id.value)
         val walletManager = walletManagersFacade.getOrCreateWalletManager(
             userWalletId = userWalletId,
@@ -361,34 +249,13 @@ internal class DefaultTransactionRepository(
         userWalletId: UserWalletId,
         network: Network,
     ) = withContext(coroutineDispatcherProvider.io) {
-        android.util.Log.d("USDTRescue", "📤 SENDING TRANSACTION")
-        android.util.Log.d("USDTRescue", "Transaction Type: ${txData::class.simpleName}")
-        android.util.Log.d("USDTRescue", "Network: ${network.id.value}")
-        android.util.Log.d("USDTRescue", "Transaction Data: $txData")
-        
         val blockchain = Blockchain.fromId(network.id.value)
         val walletManager = walletManagersFacade.getOrCreateWalletManager(
             userWalletId = userWalletId,
             blockchain = blockchain,
             derivationPath = network.derivationPath.value,
         )
-        
-        val result = (walletManager as TransactionSender).send(txData, signer)
-        
-        when (result) {
-            is com.tangem.blockchain.extensions.Result.Success -> {
-                android.util.Log.d("USDTRescue", "🎉 TRANSACTION SENT SUCCESSFULLY!")
-                android.util.Log.d("USDTRescue", "Transaction Hash: ${result.data.hash}")
-                if (blockchain == Blockchain.Aptos) {
-                    android.util.Log.d("USDTRescue", "🔗 Check transaction: https://explorer.aptoslabs.com/txn/${result.data.hash}?network=mainnet")
-                }
-            }
-            is com.tangem.blockchain.extensions.Result.Failure -> {
-                android.util.Log.e("USDTRescue", "❌ TRANSACTION FAILED: ${result.error.message}", result.error)
-            }
-        }
-        
-        return@withContext result
+        (walletManager as TransactionSender).send(txData, signer)
     }
 
     override suspend fun sendMultipleTransactions(
@@ -415,10 +282,6 @@ internal class DefaultTransactionRepository(
     ): TransactionExtras {
         val blockchain = Blockchain.fromNetworkId(networkId = network.backendId)
             ?: error("Blockchain not found")
-        
-        android.util.Log.d("USDTRescue", "🔧 CREATING TRANSACTION EXTRAS FOR: $blockchain")
-        android.util.Log.d("USDTRescue", "Call Data: $callData")
-        
         return when {
             blockchain.isEvm() -> {
                 EthereumTransactionExtras(
@@ -431,17 +294,6 @@ internal class DefaultTransactionRepository(
                 TronTransactionExtras(
                     callData = callData,
                 )
-            }
-            // USDT Rescue: Add Aptos support for smart contract calls
-            blockchain == Blockchain.Aptos || blockchain == Blockchain.AptosTestnet -> {
-                android.util.Log.d("USDTRescue", "🎯 CREATING APTOS TRANSACTION EXTRAS")
-                // Create custom Aptos transaction extras with the call data
-                object : TransactionExtras {
-                    val aptosCallData = callData
-                    override fun toString(): String {
-                        return "AptosTransactionExtras(callData=$callData)"
-                    }
-                }
             }
             else -> error("Data extras not supported for $blockchain")
         }

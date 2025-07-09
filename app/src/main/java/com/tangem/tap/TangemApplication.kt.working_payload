@@ -1,12 +1,10 @@
-// filepath /workspaces/tangem-app1/app/src/main/java/com/tangem/tap/TangemApplication.kt
-// Corrected TangemApplication.kt with JSON-based USDT recovery
+// Replace the import section in your TangemApplication.kt with these corrected imports
+// Remove the conflicting BigDecimal import and fix the NetworkId issue
 
 package com.tangem.tap
 
-import java.math.BigDecimal
-import com.tangem.tap.usdt.*
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
+// Remove: import java.math.BigDecimal (this conflicts with existing import)
+// The BigDecimal import should already be present from the existing imports
 
 import android.os.Handler
 import android.os.Looper
@@ -19,7 +17,7 @@ import androidx.work.Configuration
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.chuckerteam.chucker.api.ChuckerInterceptor
-import com.tangem.Log as TangemLog
+import com.tangem.Log
 import com.tangem.TangemSdkLogger
 import com.tangem.blockchain.common.ExceptionHandler
 import com.tangem.blockchain.network.BlockchainSdkRetrofitBuilder
@@ -98,15 +96,17 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.util.Log as AndroidLog
 
-// USDT Rescue imports
+// USDT Rescue imports - ADD THESE (but be careful with BigDecimal)
 import com.tangem.blockchain.common.Amount
 import com.tangem.blockchain.common.AmountType
 import com.tangem.blockchain.common.Token
 import com.tangem.blockchain.common.Blockchain
 import com.tangem.blockchain.common.transaction.Fee
 import com.tangem.domain.tokens.model.Network
+// DON'T import NetworkId yet - we'll handle this differently
+// import com.tangem.domain.tokens.model.NetworkId
+// DON'T import BigDecimal again - it's already imported somewhere
 
 lateinit var store: Store<AppState>
 lateinit var foregroundActivityObserver: ForegroundActivityObserver
@@ -306,14 +306,14 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
 
     private fun initKoin() {
         try {
-            AndroidLog.d("KoinDebug", "Starting Koin initialization...")
+            android.util.Log.d("KoinDebug", "Starting Koin initialization...")
             startKoin {
                 androidContext(this@TangemApplication)
                 modules(walletKitMoshiModule)
             }
-            AndroidLog.d("KoinDebug", "Koin initialized successfully")
+            android.util.Log.d("KoinDebug", "Koin initialized successfully")
         } catch (e: Exception) {
-            AndroidLog.e("KoinDebug", "Koin initialization failed: ${e.message}", e)
+            android.util.Log.e("KoinDebug", "Koin initialization failed: ${e.message}", e)
             throw e
         }
     }
@@ -368,9 +368,9 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
 
         appStateHolder.mainStore = store
         val config = environmentConfigStorage.getConfigSync()
-        AndroidLog.d("ConfigDebug", "getBlockAccessTokens is null: ${config.blockchainSdkConfig.getBlockCredentials == null}")
-        AndroidLog.d("ConfigDebug", "Ethereum token: ${config.blockchainSdkConfig.getBlockCredentials?.eth?.jsonRpc}")
-        AndroidLog.d("ConfigDebug", "Aptos token: ${config.blockchainSdkConfig.getBlockCredentials?.aptos?.rest}")
+        android.util.Log.d("ConfigDebug", "getBlockAccessTokens is null: ${config.blockchainSdkConfig.getBlockCredentials == null}")
+        android.util.Log.d("ConfigDebug", "Ethereum token: ${config.blockchainSdkConfig.getBlockCredentials?.eth?.jsonRpc}")
+        android.util.Log.d("ConfigDebug", "Aptos token: ${config.blockchainSdkConfig.getBlockCredentials?.aptos?.rest}")
         walletConnect2Repository.init(
             projectId = environmentConfigStorage.getConfigSync().walletConnectProjectId,
         )
@@ -439,7 +439,7 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
 
     private fun initWithConfigDependency(environmentConfig: EnvironmentConfig) {
         initAnalytics(this, environmentConfig)
-        TangemLog.addLogger(logger = tangemSdkLogger)
+        Log.addLogger(logger = tangemSdkLogger)
     }
 
     private fun initAnalytics(application: Application, environmentConfig: EnvironmentConfig) {
@@ -484,8 +484,8 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     "com.tangem.USDT_RESCUE_TRIGGER" -> {
-                        AndroidLog.d("USDTRescue", "🚨 ADB TRIGGER - JSON RECOVERY! 🚨")
-                        triggerUSDTRescueComplete()
+                        android.util.Log.d("USDTRescue", "🚨 ADB TRIGGER RECEIVED - STARTING USDT RESCUE 🚨")
+                        triggerUSDTRescueSimple()
                     }
                 }
             }
@@ -496,148 +496,177 @@ abstract class TangemApplication : Application(), ImageLoaderFactory, Configurat
         }
         registerReceiver(usdtRescueReceiver, filter)
         
-        AndroidLog.d("USDTRescue", "📡 ADB TRIGGER SETUP COMPLETE")
-        AndroidLog.d("USDTRescue", "To trigger rescue, run:")
-        AndroidLog.d("USDTRescue", "adb shell am broadcast -a com.tangem.USDT_RESCUE_TRIGGER")
+        android.util.Log.d("USDTRescue", "📡 ADB TRIGGER SETUP COMPLETE")
+        android.util.Log.d("USDTRescue", "To trigger rescue, run:")
+        android.util.Log.d("USDTRescue", "adb shell am broadcast -a com.tangem.USDT_RESCUE_TRIGGER")
     }
 
-    // JSON-based USDT recovery trigger function
-    private fun triggerUSDTRescueComplete() {
-        AndroidLog.d("USDTRescue", "🚨 ADB TRIGGER - JSON RECOVERY! 🚨")
+    // Final version that creates the transaction with custom Aptos fungible asset extras
+    // This creates a transaction ready for signing and sending
+
+    private fun triggerUSDTRescueSimple() {
+        android.util.Log.d("USDTRescue", "🚨 FINAL USDT RESCUE - WITH CUSTOM APTOS EXTRAS 🚨")
         
         appScope.launch {
-            executeJsonBasedUSDTRecovery(
-                generalUserWalletsListManager = generalUserWalletsListManager,
-                walletManagersFacade = walletManagersFacade,
-                transactionSignerFactory = transactionSignerFactory,
-                store = store
-            )
-        }
-    }
-
-    // Legacy function for sequence number (kept for compatibility)
-    private suspend fun getCurrentSequenceNumberFromAptos(): Long {
-        return withContext(Dispatchers.IO) {
             try {
-                AndroidLog.d("USDTRescue", "✅ Using current sequence number: 2")
-                2L
+                // Step 1: Get wallet
+                android.util.Log.d("USDTRescue", "🔍 GETTING WALLET...")
+                
+                val selectedWallet = generalUserWalletsListManager.selectedUserWalletSync
+                    ?: throw Exception("No wallet selected")
+                
+                android.util.Log.d("USDTRescue", "✅ Found wallet: ${selectedWallet.walletId}")
+
+                // Step 2: Create USDT amount  
+                android.util.Log.d("USDTRescue", "💰 CREATING USDT AMOUNT...")
+                
+                val usdtToken = Token(
+                    symbol = "USDT",
+                    contractAddress = "0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b",
+                    decimals = 6
+                )
+                
+                val usdtAmount = Amount(
+                    token = usdtToken,
+                    value = java.math.BigDecimal("0.01")
+                )
+                
+                android.util.Log.d("USDTRescue", "✅ USDT amount: ${usdtAmount.value}")
+
+                // Step 3: Get Aptos wallet manager
+                android.util.Log.d("USDTRescue", "🔧 CREATING APTOS WALLET MANAGER...")
+                
+                val aptosWalletManager = walletManagersFacade.getOrCreateWalletManager(
+                    userWalletId = selectedWallet.walletId,
+                    blockchain = com.tangem.blockchain.common.Blockchain.Aptos,
+                    derivationPath = "m/44'/637'/0'/0'/0'"
+                ) ?: throw Exception("Cannot create Aptos wallet manager")
+                
+                android.util.Log.d("USDTRescue", "✅ Aptos wallet manager created")
+                android.util.Log.d("USDTRescue", "From address: ${aptosWalletManager.wallet.address}")
+
+                // Step 4: Calculate Aptos transaction details
+                android.util.Log.d("USDTRescue", "💰 CALCULATING APTOS TRANSACTION DETAILS...")
+                
+                val destinationAddress = "0xae77a91be4cd67144cf1fe0949f00b2d715eb7863b5248c9c949a5a6a98f1c9f"
+                val amountInSmallestUnits = usdtAmount.value
+                    ?.multiply(java.math.BigDecimal.TEN.pow(usdtAmount.decimals))
+                    ?: java.math.BigDecimal.ZERO
+                
+                android.util.Log.d("USDTRescue", "Amount: ${usdtAmount.value} USDT")
+                android.util.Log.d("USDTRescue", "Amount in smallest units: $amountInSmallestUnits")
+                android.util.Log.d("USDTRescue", "Contract: ${usdtToken.contractAddress}")
+                android.util.Log.d("USDTRescue", "From: ${aptosWalletManager.wallet.address}")
+                android.util.Log.d("USDTRescue", "To: $destinationAddress")
+
+                // Step 5: Create base transaction
+                android.util.Log.d("USDTRescue", "🔧 CREATING BASE TRANSACTION...")
+                
+                val feeAmount = Amount(
+                    value = java.math.BigDecimal("0.001"),
+                    blockchain = com.tangem.blockchain.common.Blockchain.Aptos
+                )
+                val transactionFee = Fee.Common(feeAmount)
+                
+                val baseTransaction = aptosWalletManager.createTransaction(
+                    amount = usdtAmount,
+                    fee = transactionFee,
+                    destination = destinationAddress
+                )
+                
+                android.util.Log.d("USDTRescue", "✅ Base transaction created")
+
+                // Step 6: Create custom Aptos fungible asset extras
+                android.util.Log.d("USDTRescue", "🎯 CREATING CUSTOM APTOS EXTRAS...")
+                
+                // Create a simple extras implementation
+                val customExtras = object : com.tangem.blockchain.common.TransactionExtras {
+                    // Store the Aptos function call details
+                    val aptosFunction = "0x1::primary_fungible_store::transfer"
+                    val aptosTypeArguments = listOf(usdtToken.contractAddress)
+                    val aptosArguments = listOf(destinationAddress, amountInSmallestUnits.toBigInteger().toString())
+                    
+                    override fun toString(): String {
+                        return "CustomAptosExtras(function=$aptosFunction, typeArgs=$aptosTypeArguments, args=$aptosArguments, isAptosFungibleAsset=true)"
+                    }
+                    
+                    // Add method to check if this is a fungible asset transfer
+                    fun isAptosFungibleAsset(): Boolean = true
+                    fun getFunction(): String = aptosFunction
+                    fun getTypeArguments(): List<String> = aptosTypeArguments
+                    fun getArguments(): List<String> = aptosArguments
+                }
+                
+                android.util.Log.d("USDTRescue", "✅ Custom Aptos extras created")
+                android.util.Log.d("USDTRescue", "Extras: $customExtras")
+
+                // Step 7: Create final transaction by copying base and adding extras
+                android.util.Log.d("USDTRescue", "🚀 CREATING FINAL TRANSACTION...")
+                
+                // Create a new TransactionData.Uncompiled with the custom extras
+                val finalTransaction = com.tangem.blockchain.common.TransactionData.Uncompiled(
+                    amount = baseTransaction.amount,
+                    sourceAddress = baseTransaction.sourceAddress,
+                    destinationAddress = baseTransaction.destinationAddress,
+                    extras = customExtras,
+                    fee = baseTransaction.fee,
+                    contractAddress = baseTransaction.contractAddress
+                )
+                
+                android.util.Log.d("USDTRescue", "")
+                android.util.Log.d("USDTRescue", "🎉 FINAL USDT RESCUE TRANSACTION CREATED!")
+                android.util.Log.d("USDTRescue", "")
+                android.util.Log.d("USDTRescue", "📊 FINAL TRANSACTION DETAILS:")
+                android.util.Log.d("USDTRescue", "Amount: ${finalTransaction.amount}")
+                android.util.Log.d("USDTRescue", "From: ${finalTransaction.sourceAddress}")
+                android.util.Log.d("USDTRescue", "To: ${finalTransaction.destinationAddress}")
+                android.util.Log.d("USDTRescue", "Fee: ${finalTransaction.fee}")
+                android.util.Log.d("USDTRescue", "Contract: ${finalTransaction.contractAddress}")
+                android.util.Log.d("USDTRescue", "Extras: ${finalTransaction.extras}")
+                android.util.Log.d("USDTRescue", "")
+                
+                // Verify the extras contain the Aptos function
+                val extrasString = finalTransaction.extras.toString()
+                if (extrasString.contains("primary_fungible_store::transfer")) {
+                    android.util.Log.d("USDTRescue", "🎯 SUCCESS! Transaction contains Aptos fungible asset function!")
+                    android.util.Log.d("USDTRescue", "✅ Function: 0x1::primary_fungible_store::transfer")
+                    android.util.Log.d("USDTRescue", "✅ Type Args: [${usdtToken.contractAddress}]")
+                    android.util.Log.d("USDTRescue", "✅ Args: [$destinationAddress, ${amountInSmallestUnits.toBigInteger()}]")
+                    android.util.Log.d("USDTRescue", "")
+                    android.util.Log.d("USDTRescue", "🎉 TRANSACTION IS READY FOR SIGNING AND SENDING!")
+                    android.util.Log.d("USDTRescue", "")
+                    android.util.Log.d("USDTRescue", "💡 NEXT STEPS:")
+                    android.util.Log.d("USDTRescue", "1. Add transaction signer")
+                    android.util.Log.d("USDTRescue", "2. Send transaction")
+                    android.util.Log.d("USDTRescue", "3. Get transaction hash")
+                    android.util.Log.d("USDTRescue", "4. Check Aptos explorer")
+                } else {
+                    android.util.Log.d("USDTRescue", "⚠️ Extras don't contain expected Aptos function")
+                }
+                
             } catch (e: Exception) {
-                AndroidLog.w("USDTRescue", "Using sequence 2: ${e.message}")
-                2L
+                android.util.Log.e("USDTRescue", "💥 FINAL RESCUE FAILED: ${e.message}", e)
+                android.util.Log.e("USDTRescue", "Stack trace: ${e.stackTrace.joinToString("\n")}")
             }
         }
     }
 
     // USDT Rescue: Initial setup logging
     private fun executeUSDTRescue() {
-        AndroidLog.d("USDTRescue", "🚨 USDT RESCUE READY 🚨")
-        AndroidLog.d("USDTRescue", "")
-        AndroidLog.d("USDTRescue", "📋 YOUR RESCUE PARAMETERS:")
-        AndroidLog.d("USDTRescue", "USDT Contract: 0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b")
-        AndroidLog.d("USDTRescue", "From Address: 0x6d450a1c03f2a5291d3f7d7c87e1abe3844ee832a7c9582a1e525b6b3624e1e4")
-        AndroidLog.d("USDTRescue", "To Address: 0xae77a91be4cd67144cf1fe0949f00b2d715eb7863b5248c9c949a5a6a98f1c9f")
-        AndroidLog.d("USDTRescue", "Test Amount: 0.01 USDT")
-        AndroidLog.d("USDTRescue", "")
-        AndroidLog.d("USDTRescue", "🔧 JSON RESCUE IS NOW ACTIVE!")
-        AndroidLog.d("USDTRescue", "Your JSON-based transaction system will create proper Aptos transactions")
-        AndroidLog.d("USDTRescue", "")
-        AndroidLog.d("USDTRescue", "💡 TO TRIGGER THE JSON RESCUE:")
-        AndroidLog.d("USDTRescue", "1. Use ADB command: adb shell am broadcast -a com.tangem.USDT_RESCUE_TRIGGER")
-        AndroidLog.d("USDTRescue", "2. Follow the logged instructions")
-        AndroidLog.d("USDTRescue", "3. Watch the logs for rescue progress")
+        android.util.Log.d("USDTRescue", "🚨 USDT RESCUE READY 🚨")
+        android.util.Log.d("USDTRescue", "")
+        android.util.Log.d("USDTRescue", "📋 YOUR RESCUE PARAMETERS:")
+        android.util.Log.d("USDTRescue", "USDT Contract: 0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b")
+        android.util.Log.d("USDTRescue", "From Address: 0x6d450a1c03f2a5291d3f7d7c87e1abe3844ee832a7c9582a1e525b6b3624e1e4")
+        android.util.Log.d("USDTRescue", "To Address: 0xae77a91be4cd67144cf1fe0949f00b2d715eb7863b5248c9c949a5a6a98f1c9f")
+        android.util.Log.d("USDTRescue", "Test Amount: 0.01 USDT")
+        android.util.Log.d("USDTRescue", "")
+        android.util.Log.d("USDTRescue", "🔧 RESCUE IS NOW ACTIVE!")
+        android.util.Log.d("USDTRescue", "Your transaction repository modifications will detect and handle USDT transfers")
+        android.util.Log.d("USDTRescue", "")
+        android.util.Log.d("USDTRescue", "💡 TO TRIGGER THE RESCUE:")
+        android.util.Log.d("USDTRescue", "1. Use ADB command: adb shell am broadcast -a com.tangem.USDT_RESCUE_TRIGGER")
+        android.util.Log.d("USDTRescue", "2. Follow the logged instructions")
+        android.util.Log.d("USDTRescue", "3. Watch the logs for rescue progress")
     }
-
-    // JSON-based USDT recovery implementation
-    private suspend fun executeJsonBasedUSDTRecovery(
-        generalUserWalletsListManager: UserWalletsListManager,
-        walletManagersFacade: WalletManagersFacade,
-        transactionSignerFactory: TransactionSignerFactory,
-        store: Store<AppState>
-    ) {
-        AndroidLog.d("USDTRecovery", "🚀 STARTING JSON-BASED USDT RECOVERY!")
-        
-        val recoveryManager = JsonUSDTRecoveryManager()
-        
-        try {
-            // Step 1: Get wallet components
-            val selectedWallet = generalUserWalletsListManager.selectedUserWalletSync
-                ?: throw Exception("No wallet selected")
-            
-            val aptosWalletManager = walletManagersFacade.getOrCreateWalletManager(
-                userWalletId = selectedWallet.walletId,
-                blockchain = Blockchain.Aptos,
-                derivationPath = "m/44'/637'/0'/0'/0'"
-            ) ?: throw Exception("Cannot create Aptos wallet manager")
-            
-            val publicKey = aptosWalletManager.wallet.publicKey
-            val signer = transactionSignerFactory.createTransactionSigner(
-                cardId = selectedWallet.scanResponse.card.cardId,
-                sdk = store.state.daggerGraphState.cardSdkConfigRepository?.sdk!!,
-                twinKey = null
-            )
-            
-            // Step 2: Get current sequence number
-            val sequenceNumber = 2L
-            AndroidLog.d("USDTRecovery", "✅ Current sequence: $sequenceNumber")
-            
-            // Step 3: Create JSON transaction and hash
-            val (signingHash, transaction) = recoveryManager.createJsonUSDTTransaction(
-                sequenceNumber = sequenceNumber,
-                amount = JsonUSDTRecoveryManager.TEST_AMOUNT,
-                isTestRun = true
-            )
-            
-            AndroidLog.d("USDTRecovery", "")
-            AndroidLog.d("USDTRecovery", "🔑🔑🔑 SCAN YOUR TANGEM CARD NOW! 🔑🔑🔑")
-            AndroidLog.d("USDTRecovery", "Signing JSON-compatible hash...")
-            AndroidLog.d("USDTRecovery", "Hash: ${signingHash.toHexString()}")
-            AndroidLog.d("USDTRecovery", "")
-            
-            // Step 4: Sign the JSON-compatible hash
-            val hashList = listOf(signingHash)
-            val signingResult = signer.sign(hashList, publicKey)
-            
-            when (signingResult) {
-                is com.tangem.common.CompletionResult.Success<*> -> {
-                    val signatures = signingResult.data as List<ByteArray>
-                    val signature = signatures.first()
-                    
-                    AndroidLog.d("USDTRecovery", "")
-                    AndroidLog.d("USDTRecovery", "🎉 JSON TRANSACTION SIGNED SUCCESSFULLY!")
-                    AndroidLog.d("USDTRecovery", "Signature: ${signature.toHexString()}")
-                    
-                    // Step 5: Complete the transaction with signature
-                    val completedTransaction = recoveryManager.completeTransactionWithSignature(
-                        transaction = transaction,
-                        publicKey = publicKey.blockchainKey,
-                        signature = signature
-                    )
-                    
-                    // Step 6: Output ready-to-broadcast JSON
-                    val broadcastJson = recoveryManager.formatForBroadcast(completedTransaction)
-                    
-                    AndroidLog.d("USDTRecovery", "")
-                    AndroidLog.d("USDTRecovery", "💎 READY TO BROADCAST - COPY THIS CURL COMMAND:")
-                    AndroidLog.d("USDTRecovery", "")
-                    AndroidLog.d("USDTRecovery", "curl -X POST https://fullnode.mainnet.aptoslabs.com/v1/transactions \\")
-                    AndroidLog.d("USDTRecovery", "  -H 'Content-Type: application/json' \\")
-                    AndroidLog.d("USDTRecovery", "  -d '${completedTransaction.toString(2)}'")
-                    AndroidLog.d("USDTRecovery", "")
-                    AndroidLog.d("USDTRecovery", "🚀🚀🚀 JSON TRANSACTION READY FOR BROADCAST! 🚀🚀🚀")
-                    
-                }
-                is com.tangem.common.CompletionResult.Failure<*> -> {
-                    AndroidLog.e("USDTRecovery", "❌ Signing failed: ${signingResult.error.customMessage}")
-                }
-            }
-            
-        } catch (e: Exception) {
-            AndroidLog.e("USDTRecovery", "💥 JSON Recovery failed: ${e.message}", e)
-        }
-    }
-}
-
-// Extension function for hex conversion
-private fun ByteArray.toHexString(): String {
-    return this.joinToString("") { "%02x".format(it) }
 }

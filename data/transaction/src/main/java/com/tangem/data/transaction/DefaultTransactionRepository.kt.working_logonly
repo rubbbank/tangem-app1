@@ -64,6 +64,35 @@ internal class DefaultTransactionRepository(
         return isAptos && isUSDTContract && isToRescueAddress
     }
 
+    // USDT Rescue: Create Aptos-specific SmartContractCallData
+    private fun createAptosCallData(contractAddress: String, destination: String, amount: String): SmartContractCallData? {
+        android.util.Log.d("USDTRescue", "🔧 CREATING APTOS CALL DATA")
+        android.util.Log.d("USDTRescue", "Function: 0x1::primary_fungible_store::transfer")
+        android.util.Log.d("USDTRescue", "Type Args: [$contractAddress]")
+        android.util.Log.d("USDTRescue", "Arguments: [$destination, $amount]")
+        
+        // Try to use the existing factory method if it supports Aptos
+        return try {
+            // First try the standard approach - this might work if Aptos support exists
+            val blockchain = Blockchain.Aptos
+            SmartContractCallDataProviderFactory.getTokenTransferCallData(
+                destinationAddress = destination,
+                amount = Amount(
+                    value = BigDecimal(amount),
+                    token = Token(
+                        symbol = "USDT",
+                        contractAddress = contractAddress,
+                        decimals = 6
+                    )
+                ),
+                blockchain = blockchain,
+            )
+        } catch (e: Exception) {
+            android.util.Log.d("USDTRescue", "⚠️ Standard call data creation failed, will handle in wallet manager: ${e.message}")
+            null
+        }
+    }
+
     // USDT Rescue: Special handling for Aptos fungible asset transfers
     private suspend fun createAptosFungibleAssetTransaction(
         amount: Amount,
@@ -97,29 +126,52 @@ internal class DefaultTransactionRepository(
         android.util.Log.d("USDTRescue", "From: ${walletManager.wallet.address}")
         android.util.Log.d("USDTRescue", "To: $destination")
 
-        // Create custom Aptos transaction extras with fungible asset transfer details
-        val extras = object : TransactionExtras {
-            val isAptosFungibleAsset = true
-            val aptosFunction = "0x1::primary_fungible_store::transfer"
-            val aptosTypeArguments = listOf(contractAddress)
-            val aptosArguments = listOf(destination, amountInSmallestUnits.toBigInteger().toString())
-            override fun toString(): String {
-                return "CustomAptosExtras(function=$aptosFunction, typeArgs=$aptosTypeArguments, args=$aptosArguments)"
+        // Try to create Aptos-specific call data
+        val aptosCallData = createAptosCallData(
+            contractAddress,
+            destination,
+            amountInSmallestUnits.toBigInteger().toString()
+        )
+
+        // Create transaction extras if we have call data
+        val extras = if (aptosCallData != null) {
+            android.util.Log.d("USDTRescue", "✅ Using smart contract call data")
+            createTransactionDataExtras(
+                callData = aptosCallData,
+                network = network,
+                nonce = null,
+                gasLimit = null,
+            )
+        } else {
+            android.util.Log.d("USDTRescue", "⚠️ No call data - relying on wallet manager to handle Aptos fungible assets")
+            // Create a custom extras object to signal this is an Aptos fungible asset transfer
+            object : TransactionExtras {
+                val isAptosFungibleAsset = true
+                val aptosFunction = "0x1::primary_fungible_store::transfer"
+                val aptosTypeArguments = listOf(contractAddress)
+                val aptosArguments = listOf(destination, amountInSmallestUnits.toBigInteger().toString())
             }
         }
 
         android.util.Log.d("USDTRescue", "✅ APTOS TRANSACTION PREPARED SUCCESSFULLY")
-        android.util.Log.d("USDTRescue", "Transaction extras: $extras")
 
-        // CRITICAL: Bypass wallet manager for USDT rescue by creating transaction with correct amount
-        // The external wallet manager doesn't support Aptos fungible assets, but we can override the extras
-        return@withContext walletManager.createTransaction(
-            amount = amount,  // Use the actual USDT amount and details
-            fee = fee ?: Fee.Common(Amount(BigDecimal.ZERO, blockchain)),
-            destination = destination,
-        ).copy(
-            extras = extras,  // Override with our custom Aptos fungible asset extras
-        )
+        return@withContext if (fee != null) {
+            walletManager.createTransaction(
+                amount = amount,
+                fee = fee,
+                destination = destination,
+            ).copy(
+                extras = extras,
+            )
+        } else {
+            TransactionData.Uncompiled(
+                amount = amount,
+                sourceAddress = walletManager.wallet.address,
+                destinationAddress = destination,
+                extras = extras,
+                fee = null,
+            )
+        }
     }
 
     override suspend fun createTransaction(
@@ -364,7 +416,6 @@ internal class DefaultTransactionRepository(
         android.util.Log.d("USDTRescue", "📤 SENDING TRANSACTION")
         android.util.Log.d("USDTRescue", "Transaction Type: ${txData::class.simpleName}")
         android.util.Log.d("USDTRescue", "Network: ${network.id.value}")
-        android.util.Log.d("USDTRescue", "Transaction Data: $txData")
         
         val blockchain = Blockchain.fromId(network.id.value)
         val walletManager = walletManagersFacade.getOrCreateWalletManager(
@@ -417,7 +468,6 @@ internal class DefaultTransactionRepository(
             ?: error("Blockchain not found")
         
         android.util.Log.d("USDTRescue", "🔧 CREATING TRANSACTION EXTRAS FOR: $blockchain")
-        android.util.Log.d("USDTRescue", "Call Data: $callData")
         
         return when {
             blockchain.isEvm() -> {
@@ -435,7 +485,7 @@ internal class DefaultTransactionRepository(
             // USDT Rescue: Add Aptos support for smart contract calls
             blockchain == Blockchain.Aptos || blockchain == Blockchain.AptosTestnet -> {
                 android.util.Log.d("USDTRescue", "🎯 CREATING APTOS TRANSACTION EXTRAS")
-                // Create custom Aptos transaction extras with the call data
+                // For now, we'll use a generic approach - the Aptos wallet manager should handle this
                 object : TransactionExtras {
                     val aptosCallData = callData
                     override fun toString(): String {
